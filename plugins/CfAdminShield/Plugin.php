@@ -21,14 +21,19 @@ class Plugin extends AbstractPlugin
             return;
         }
 
-        $securePath = admin_setting('secure_path', admin_setting('frontend_admin_path', hash('crc32b', config('app.key'))));
-        $securePath = '/' . ltrim((string) $securePath, '/');
+        $securePath = (string) admin_setting('secure_path', admin_setting('frontend_admin_path', hash('crc32b', config('app.key'))));
+        $securePath = '/' . trim($securePath, '/');
+        if ($securePath === '/') {
+            return;
+        }
 
         $request = request();
         $path = '/' . ltrim((string) $request->path(), '/');
         if (!str_starts_with($path, $securePath)) {
             return;
         }
+
+        $postPath = $path;
 
         $cookieName = 'cf_admin_shield';
         $token = (string) $request->cookie($cookieName, '');
@@ -49,15 +54,15 @@ class Plugin extends AbstractPlugin
             if ($verified) {
                 $token = Str::random(48);
                 $this->storeVerifiedToken($token, $ip, $userAgent);
-                $response = redirect($securePath);
+                $response = redirect($postPath);
                 $response->withCookie(cookie($cookieName, $token, 10, '/', null, $request->isSecure(), true, false, 'Lax'));
                 $this->intercept($response);
             }
 
-            $this->intercept($this->renderChallengePage($siteKey, true, $securePath));
+            $this->intercept($this->renderChallengePage($siteKey, true, $postPath));
         }
 
-        $this->intercept($this->renderChallengePage($siteKey, false, $securePath));
+        $this->intercept($this->renderChallengePage($siteKey, false, $postPath));
     }
 
     public function schedule(Schedule $schedule): void

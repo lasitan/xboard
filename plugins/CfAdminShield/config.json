@@ -1,10 +1,10 @@
 {
-  "name": "Cloudflare Admin Shield",
+  "name": "Cloudflare 管理后台防护",
   "code": "cf_admin_shield",
   "type": "feature",
   "version": "1.0.0",
-  "description": "Protect admin secure_path with Cloudflare Turnstile (server-side validation).",
-  "author": "chenchen271956",
+  "description": "使用 Cloudflare Turnstile（服务端校验）保护管理后台的 secure_path。",
+  "author": "chenchen71956",
   "require": {
     "xboard": ">=1.0.0"
   },
@@ -12,20 +12,20 @@
     "enabled": {
       "type": "boolean",
       "default": false,
-      "label": "Enable",
-      "description": "Enable Turnstile protection for admin secure_path"
+      "label": "启用防护",
+      "description": "为管理后台的 secure_path 启用 Turnstile 人机验证保护"
     },
     "turnstile_site_key": {
       "type": "string",
       "default": "",
-      "label": "Turnstile Site Key",
-      "description": "Turnstile sitekey (public)"
+      "label": "Turnstile 站点密钥（Site Key）",
+      "description": "Cloudflare Turnstile 的站点密钥（前端公钥）"
     },
     "turnstile_secret_key": {
       "type": "string",
       "default": "",
-      "label": "Turnstile Secret Key",
-      "description": "Turnstile secret key (server-side verification)"
+      "label": "Turnstile 私密密钥（Secret Key）",
+      "description": "Cloudflare Turnstile 的私密密钥（用于服务端校验）"
     }
   }
 }
