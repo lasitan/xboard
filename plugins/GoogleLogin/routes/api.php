@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 Route::group([
-    'prefix' => 'oauth/google'
+    'prefix' => 'api/v1/passport/auth/google'
 ], function () {
-    Route::get('/redirect', function (Request $request) {
+    Route::get('/login', function (Request $request) {
         $pluginConfig = Cache::remember('oauth:google_login:config', 60, function () {
             $plugin = Plugin::query()->where('code', 'google_login')->first();
             if (!$plugin || !$plugin->is_enabled) {
@@ -43,7 +43,7 @@ Route::group([
         $state = Str::random(32);
         Cache::put('oauth:google:state:' . hash('sha256', $state), ['redirect' => $redirect], 600);
 
-        $callbackPath = '/oauth/google/callback';
+        $callbackPath = '/api/v1/passport/auth/google/callback';
         $redirectUri = $callbackDomain !== '' ? rtrim($callbackDomain, '/') . $callbackPath : url($callbackPath);
 
         $params = [
@@ -101,7 +101,7 @@ Route::group([
             throw new ApiException('Google login is not configured', 400);
         }
 
-        $callbackPath = '/oauth/google/callback';
+        $callbackPath = '/api/v1/passport/auth/google/callback';
         $redirectUri = $callbackDomain !== '' ? rtrim($callbackDomain, '/') . $callbackPath : url($callbackPath);
 
         $tokenPayload = [
