@@ -379,7 +379,7 @@ class XboardInstall extends Command
             $hasNonNewFiles = false;
             foreach ($output as $line) {
                 $status = trim(substr($line, 0, 2));
-                if ($status !== 'A') {
+                if ($status !== 'A' && $status !== '??') {
                     $hasNonNewFiles = true;
                     break;
                 }
@@ -392,7 +392,7 @@ class XboardInstall extends Command
                     $status = trim(substr($line, 0, 2));
                     $filePath = trim(substr($line, 3));
 
-                    if (strpos($filePath, 'plugins/') === 0 && $status !== 'A') {
+                    if (strpos($filePath, 'plugins/') === 0 && $status !== 'A' && $status !== '??') {
                         $relativePath = substr($filePath, 8);
                         if ($console) {
                             $action = match ($status) {
