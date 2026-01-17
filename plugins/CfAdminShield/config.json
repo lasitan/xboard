@@ -15,6 +15,12 @@
       "label": "启用防护",
       "description": "为管理后台的 secure_path 启用 Turnstile 人机验证保护"
     },
+    "allow_cn_ip": {
+      "type": "boolean",
+      "default": true,
+      "label": "允许 CN IP 访问",
+      "description": "关闭后，将禁止中国（CN）IP 访问管理后台入口"
+    },
     "turnstile_site_key": {
       "type": "string",
       "default": "",

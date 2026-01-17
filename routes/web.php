@@ -62,14 +62,53 @@ Route::match(['GET', 'POST'], '/' . $adminPathTrim . '/{any?}', function (Reques
         return $config;
     });
 
-    $enabled = (bool) (($pluginConfig['enabled'] ?? false) && is_array($pluginConfig));
-    $siteKey = trim((string) ($pluginConfig['turnstile_site_key'] ?? ''));
-    $secretKey = trim((string) ($pluginConfig['turnstile_secret_key'] ?? ''));
+    $pluginConfigArr = is_array($pluginConfig) ? $pluginConfig : [];
+    $enabled = (bool) ($pluginConfigArr['enabled'] ?? false);
+    $allowCnIp = (bool) ($pluginConfigArr['allow_cn_ip'] ?? true);
+    $siteKey = trim((string) ($pluginConfigArr['turnstile_site_key'] ?? ''));
+    $secretKey = trim((string) ($pluginConfigArr['turnstile_secret_key'] ?? ''));
 
     $cookieName = 'cf_admin_shield';
     $token = (string) $request->cookie($cookieName, '');
     $ip = (string) $request->ip();
     $ua = (string) $request->header('user-agent', '');
+
+    $fetchJson = function (string $url, int $timeoutSeconds = 2): ?array {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $timeoutSeconds);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeoutSeconds);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: application/json']);
+        $raw = curl_exec($ch);
+        curl_close($ch);
+        if (!is_string($raw) || $raw === '') {
+            return null;
+        }
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) ? $decoded : null;
+    };
+
+    $getIpCountryCode = function (string $ip) use ($fetchJson): ?string {
+        if ($ip === '') {
+            return null;
+        }
+
+        $cacheKey = 'web:cf_admin_shield:ip_country:' . hash('sha256', $ip);
+        return Cache::remember($cacheKey, 3600, function () use ($ip, $fetchJson) {
+            $countryIs = $fetchJson('https://api.country.is/' . rawurlencode($ip));
+            if (is_array($countryIs) && isset($countryIs['country']) && is_string($countryIs['country'])) {
+                return strtoupper($countryIs['country']);
+            }
+        });
+    };
+
+    if (!$allowCnIp) {
+        $country = $getIpCountryCode($ip);
+        if ($country === 'CN') {
+            return response('Forbidden', 403);
+        }
+    }
 
     $isVerified = function (string $token) use ($ip, $ua): bool {
         if ($token === '') {
