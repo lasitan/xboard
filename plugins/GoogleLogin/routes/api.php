@@ -3,7 +3,7 @@
 use App\Exceptions\ApiException;
 use App\Models\Plugin;
 use App\Models\User;
-use App\Services\Auth\LoginService;
+use App\Services\AuthService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -163,13 +163,19 @@ Route::group([
         $user->last_login_at = time();
         $user->save();
 
-        $loginService = app(LoginService::class);
-        $redirect = (string) ($stateData['redirect'] ?? 'dashboard');
-        $url = $loginService->generateQuickLoginUrl($user, $redirect);
-        if (!$url) {
-            throw new ApiException('Failed to generate login url', 500);
-        }
+        $authService = new AuthService($user);
+        $authData = $authService->generateAuthData();
 
-        return redirect()->to($url);
+        $redirect = (string) ($stateData['redirect'] ?? 'dashboard');
+        $redirect = ltrim($redirect, '/');
+
+        $appUrl = admin_setting('app_url');
+        $base = $appUrl ? rtrim($appUrl, '/') : rtrim(url(''), '/');
+
+        $frontPath = '/#/' . $redirect;
+        $qs = 'auth_data=' . rawurlencode((string) ($authData['auth_data'] ?? ''))
+            . '&token=' . rawurlencode((string) ($authData['token'] ?? ''));
+
+        return redirect()->to($base . $frontPath . '?' . $qs);
     });
 });
