@@ -50,7 +50,6 @@ class XboardUpdate extends Command
         $this->info('正在检查内置插件文件...');
         XboardInstall::restoreProtectedPlugins($this);
         $this->info('正在检查并安装默认插件...');
-        PluginManager::installDefaultPlugins();
         $this->info('默认插件检查完成');
         // Artisan::call('reset:traffic', ['--fix-null' => true]);
         $this->info('正在重新计算所有用户的重置时间...');

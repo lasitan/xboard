@@ -143,7 +143,7 @@ class PluginManager
         $configFile = $this->getPluginPath($pluginCode) . '/config.json';
 
         if (!File::exists($configFile)) {
-            throw new \Exception('Plugin config file not found');
+            throw new \Exception("Plugin config file not found: {$pluginCode} ({$configFile})");
         }
 
         $config = json_decode(File::get($configFile), true);

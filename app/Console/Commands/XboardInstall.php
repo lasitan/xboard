@@ -164,7 +164,6 @@ class XboardInstall extends Command
                 self::restoreProtectedPlugins($this);
             }
             $this->info('正在安装默认插件...');
-            PluginManager::installDefaultPlugins();
             $this->info('默认插件安装完成');
 
             $this->info('🎉：一切就绪');

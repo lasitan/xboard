@@ -2,6 +2,7 @@
 !.gitignore
 !AlipayF2f/
 !Telegram
+!Telegram/**
 !CfAdminShield/
 !CfAdminShield/**
 !GoogleLogin/
