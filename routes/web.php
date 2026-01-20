@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Plugin\CfAdminShield\models\Ipdb;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,6 +66,8 @@ Route::match(['GET', 'POST'], '/' . $adminPathTrim . '/{any?}', function (Reques
     $pluginConfigArr = is_array($pluginConfig) ? $pluginConfig : [];
     $enabled = (bool) ($pluginConfigArr['enabled'] ?? false);
     $allowCnIp = (bool) ($pluginConfigArr['allow_cn_ip'] ?? true);
+    $ipdbAppid = trim((string) ($pluginConfigArr['ipdb_appid'] ?? ''));
+    $ipdbSecret = trim((string) ($pluginConfigArr['ipdb_secret'] ?? ''));
     $siteKey = trim((string) ($pluginConfigArr['turnstile_site_key'] ?? ''));
     $secretKey = trim((string) ($pluginConfigArr['turnstile_secret_key'] ?? ''));
 
@@ -73,34 +76,8 @@ Route::match(['GET', 'POST'], '/' . $adminPathTrim . '/{any?}', function (Reques
     $ip = (string) $request->ip();
     $ua = (string) $request->header('user-agent', '');
 
-    $fetchJson = function (string $url, int $timeoutSeconds = 2): ?array {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $timeoutSeconds);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeoutSeconds);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: application/json']);
-        $raw = curl_exec($ch);
-        curl_close($ch);
-        if (!is_string($raw) || $raw === '') {
-            return null;
-        }
-        $decoded = json_decode($raw, true);
-        return is_array($decoded) ? $decoded : null;
-    };
-
-    $getIpCountryCode = function (string $ip) use ($fetchJson): ?string {
-        if ($ip === '') {
-            return null;
-        }
-
-        $cacheKey = 'web:cf_admin_shield:ip_country:' . hash('sha256', $ip);
-        return Cache::remember($cacheKey, 3600, function () use ($ip, $fetchJson) {
-            $countryIs = $fetchJson('https://api.country.is/' . rawurlencode($ip));
-            if (is_array($countryIs) && isset($countryIs['country']) && is_string($countryIs['country'])) {
-                return strtoupper($countryIs['country']);
-            }
-        });
+    $getIpCountryCode = function (string $ip) use ($ipdbAppid, $ipdbSecret): ?string {
+        return Ipdb::getCountryCode($ip, $ipdbAppid, $ipdbSecret);
     };
 
     if (!$allowCnIp) {

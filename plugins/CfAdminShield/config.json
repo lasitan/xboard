@@ -21,6 +21,18 @@
       "label": "允许 CN IP 访问",
       "description": "关闭后，将禁止中国（CN）IP 访问管理后台入口"
     },
+    "ipdb_appid": {
+      "type": "string",
+      "default": "",
+      "label": "IPDB APPID",
+      "description": "用于 IPDB API（/api/v1/paas/ip/fetch）的 APPID"
+    },
+    "ipdb_secret": {
+      "type": "string",
+      "default": "",
+      "label": "IPDB 密钥",
+      "description": "用于生成 datasign 的密钥（appse/secret）"
+    },
     "turnstile_site_key": {
       "type": "string",
       "default": "",
