@@ -35,58 +35,7 @@ class Plugin extends AbstractPlugin
 
     public function boot(): void
     {
-        if (!$this->getConfig('enabled', false)) {
-            return;
-        }
-
-        $siteKey = trim((string) $this->getConfig('turnstile_site_key', ''));
-        $secretKey = trim((string) $this->getConfig('turnstile_secret_key', ''));
-        if ($siteKey === '' || $secretKey === '') {
-            return;
-        }
-
-        $securePath = (string) admin_setting('secure_path', admin_setting('frontend_admin_path', hash('crc32b', config('app.key'))));
-        $securePath = '/' . trim($securePath, '/');
-        if ($securePath === '/') {
-            return;
-        }
-
-        $request = request();
-        $path = '/' . ltrim((string) $request->path(), '/');
-        if (!str_starts_with($path, $securePath)) {
-            return;
-        }
-
-        $postPath = $path;
-
-        $cookieName = 'cf_admin_shield';
-        $token = (string) $request->cookie($cookieName, '');
-        if ($token !== '' && $this->isVerifiedToken($token, $request->ip(), (string) $request->header('user-agent', ''))) {
-            return;
-        }
-
-        if ($request->isMethod('post')) {
-            $turnstileResponse = (string) $request->input('cf-turnstile-response', '');
-            $ip = $request->ip();
-            $userAgent = (string) $request->header('user-agent', '');
-
-            $verified = false;
-            if ($turnstileResponse !== '') {
-                $verified = $this->verifyTurnstile($secretKey, $turnstileResponse, $ip);
-            }
-
-            if ($verified) {
-                $token = Str::random(48);
-                $this->storeVerifiedToken($token, $ip, $userAgent);
-                $response = redirect($postPath);
-                $response->withCookie(cookie($cookieName, $token, 10, '/', null, $request->isSecure(), true, false, 'Lax'));
-                $this->intercept($response);
-            }
-
-            $this->intercept($this->renderChallengePage($siteKey, true, $postPath));
-        }
-
-        $this->intercept($this->renderChallengePage($siteKey, false, $postPath));
+        return;
     }
 
     public function schedule(Schedule $schedule): void
