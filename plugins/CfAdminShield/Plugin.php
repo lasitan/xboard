@@ -6,9 +6,33 @@ use App\Services\Plugin\AbstractPlugin;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Plugin\CfAdminShield\models\AdminShield;
+use Plugin\CfAdminShield\models\Ipdb;
 
 class Plugin extends AbstractPlugin
 {
+    public static function handleWeb(Request $request, array $pluginConfigArr, string $adminPath)
+    {
+        $enabled = (bool) ($pluginConfigArr['enabled'] ?? false);
+        if (!$enabled) {
+            return null;
+        }
+
+        $allowCnIp = (bool) ($pluginConfigArr['allow_cn_ip'] ?? true);
+        if (!$allowCnIp) {
+            $ip = (string) $request->ip();
+            $ipdbAppid = trim((string) ($pluginConfigArr['ipdb_appid'] ?? ''));
+            $ipdbSecret = trim((string) ($pluginConfigArr['ipdb_secret'] ?? ''));
+            $country = Ipdb::getCountryCode($ip, $ipdbAppid, $ipdbSecret);
+            if ($country === 'CN') {
+                return response('Forbidden', 403);
+            }
+        }
+
+        return AdminShield::handle($request, $pluginConfigArr);
+    }
+
     public function boot(): void
     {
         if (!$this->getConfig('enabled', false)) {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Plugin\CfAdminShield\moudels;
+namespace Plugin\CfAdminShield\models;
 
 use Illuminate\Support\Facades\Cache;
 
