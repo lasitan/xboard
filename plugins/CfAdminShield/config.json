@@ -3,47 +3,53 @@
   "code": "cf_admin_shield",
   "type": "feature",
   "version": "1.0.0",
-  "description": "使用Cloudflare Turnstile保护管理后台",
+  "description": "使用 Cloudflare Turnstile（服务端校验）保护管理后台的 secure_path。",
   "author": "chenchen71956",
   "require": {
     "xboard": ">=1.0.0"
   },
   "config": {
+    "enabled": {
+      "type": "boolean",
+      "default": false,
+      "label": "启用防护",
+      "description": "为管理后台的 secure_path 启用 Turnstile 人机验证保护"
+    },
     "allow_cn_ip": {
       "type": "boolean",
       "default": true,
       "label": "允许 CN IP 访问",
-      "description": "关闭后，将禁止CN IP 访问管理后台入口"
+      "description": "关闭后，将禁止中国（CN）IP 访问管理后台入口"
     },
     "proxy_url": {
       "type": "string",
       "default": "https://hyperos.mi.com/",
       "label": "伪装目标地址",
-      "description": "用于返回反代伪装内容的目标 URL"
+      "description": "用于返回反代伪装内容的目标 URL（例如 https://hyperos.mi.com/）"
     },
     "ipdb_appid": {
       "type": "string",
       "default": "",
       "label": "IPDB APPID",
-      "description": "用于 IPDB API的 APPID"
+      "description": "用于 IPDB API（/api/v1/paas/ip/fetch）的 APPID"
     },
     "ipdb_secret": {
       "type": "string",
       "default": "",
       "label": "IPDB 密钥",
-      "description": "用于生成 datasign 的密钥"
+      "description": "用于生成 datasign 的密钥（appse/secret）"
     },
     "turnstile_site_key": {
       "type": "string",
       "default": "",
-      "label": "Turnstile Site Key",
-      "description": "Cloudflare Turnstile 的站点密钥"
+      "label": "Turnstile 站点密钥（Site Key）",
+      "description": "Cloudflare Turnstile 的站点密钥（前端公钥）"
     },
     "turnstile_secret_key": {
       "type": "string",
       "default": "",
-      "label": "Turnstile Secret Key",
-      "description": "Cloudflare Turnstile 的私密密钥"
+      "label": "Turnstile 私密密钥（Secret Key）",
+      "description": "Cloudflare Turnstile 的私密密钥（用于服务端校验）"
     }
   }
 }

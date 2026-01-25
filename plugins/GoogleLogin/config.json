@@ -9,6 +9,12 @@
     "xboard": ">=1.0.0"
   },
   "config": {
+    "enabled": {
+      "type": "boolean",
+      "default": false,
+      "label": "启用",
+      "description": "启用 Google OAuth2 登录"
+    },
     "client_id": {
       "type": "string",
       "default": "",
@@ -21,11 +27,11 @@
       "label": "Google Client Secret",
       "description": "Google OAuth2 客户端密钥"
     },
-    "callback_url": {
+    "callback_domain": {
       "type": "string",
       "default": "",
-      "label": "授权回调地址",
-      "description": "Google OAuth2 回调地址，留空则使用当前域名默认回调路径"
+      "label": "授权回调域名",
+      "description": "用于拼接回调地址的域名（例如 https://example.com），留空则使用当前域名"
     },
     "redirect": {
       "type": "string",

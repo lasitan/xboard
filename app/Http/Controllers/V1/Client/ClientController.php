@@ -58,22 +58,6 @@ class ClientController extends Controller
             $servers = HookManager::filter('client.subscribe.servers', $servers, $user, $request);
         }
 
-        $flagInput = trim((string) $request->input('flag', ''));
-        $uaHeader = trim((string) $request->header('User-Agent', ''));
-        if ($flagInput === '' && $uaHeader === '') {
-            $disguise = HookManager::filter('client.subscribe.disguise', null, $request, $user);
-            if ($disguise) {
-                return $disguise;
-            }
-
-            $html = '<!doctype html><html lang="en"><head><meta charset="UTF-8" />'
-                . '<meta name="viewport" content="width=device-width,initial-scale=1" />'
-                . '<title>' . e('OK') . '</title>'
-                . '</head><body>OK</body></html>';
-
-            return response($html, 200)->header('content-type', 'text/html; charset=UTF-8');
-        }
-
         $clientInfo = $this->getClientInfo($request);
 
         $requestedTypes = $this->parseRequestedTypes($request->input('types'));
