@@ -25,13 +25,5 @@ class PluginServiceProvider extends ServiceProvider
         if (!file_exists(base_path('plugins'))) {
             mkdir(base_path('plugins'), 0755, true);
         }
-
-        try {
-            if (Schema::hasTable('plugins')) {
-                app(PluginManager::class)->initializeEnabledPlugins();
-            }
-        } catch (\Throwable $e) {
-            Log::error('Failed to initialize enabled plugins: ' . $e->getMessage());
-        }
     }
 }
