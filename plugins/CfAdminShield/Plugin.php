@@ -3,6 +3,7 @@
 namespace Plugin\CfAdminShield;
 
 use App\Services\Plugin\AbstractPlugin;
+use App\Services\Plugin\HookManager;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -61,7 +62,18 @@ class Plugin extends AbstractPlugin
 
     public function boot(): void
     {
-        return;
+        if (!$this->getConfig('enabled', false)) {
+            return;
+        }
+
+        HookManager::registerFilter('client.subscribe.disguise', function ($value, $request, $user) {
+            $html = '<!doctype html><html lang="en"><head><meta charset="UTF-8" />'
+                . '<meta name="viewport" content="width=device-width,initial-scale=1" />'
+                . '<title>' . e('Welcome') . '</title>'
+                . '</head><body>Welcome</body></html>';
+
+            return response($html, 200)->header('content-type', 'text/html; charset=UTF-8');
+        }, 20);
     }
 
     public function schedule(Schedule $schedule): void
