@@ -21,12 +21,6 @@
       "label": "允许 CN IP 访问",
       "description": "关闭后，将禁止中国（CN）IP 访问管理后台入口"
     },
-    "proxy_url": {
-      "type": "string",
-      "default": "https://hyperos.mi.com/",
-      "label": "伪装目标地址",
-      "description": "用于返回反代伪装内容的目标 URL（例如 https://hyperos.mi.com/）"
-    },
     "ipdb_appid": {
       "type": "string",
       "default": "",

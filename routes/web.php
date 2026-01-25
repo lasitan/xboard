@@ -22,47 +22,23 @@ use Plugin\CfAdminShield\Plugin as CfAdminShieldPlugin;
 */
 
 Route::get('/', function (Request $request) {
-    $proxyUrl = Cache::remember('web:cf_admin_shield:proxy_url', 60, function () {
-        $plugin = Plugin::query()->where('code', 'cf_admin_shield')->first();
-        if (!$plugin || !$plugin->is_enabled) {
-            return null;
-        }
-        $config = [];
-        if (is_string($plugin->config) && $plugin->config !== '') {
-            $decoded = json_decode($plugin->config, true);
-            if (is_array($decoded)) {
-                $config = $decoded;
-            }
-        }
-        $proxyUrl = trim((string) ($config['proxy_url'] ?? ''));
-        return $proxyUrl !== '' ? $proxyUrl : null;
-    });
-    $proxyUrl = is_string($proxyUrl) && $proxyUrl !== '' ? $proxyUrl : 'https://hyperos.mi.com/';
+    $html = '<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8" />'
+        . '<meta name="viewport" content="width=device-width,initial-scale=1" />'
+        . '<title>' . e('Coming Soon') . '</title>'
+        . '<style>'
+        . 'html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}'
+        . 'body{display:flex;align-items:center;justify-content:center;background:#0b1220;color:#e5e7eb;}'
+        . '.wrap{text-align:center;max-width:720px;padding:24px;}'
+        . 'h1{margin:0 0 12px;font-size:42px;letter-spacing:.02em;}'
+        . 'p{margin:0;color:#9ca3af;font-size:16px;}'
+        . '</style>'
+        . '</head><body><div class="wrap">'
+        . '<h1>Coming Soon</h1>'
+        . '<p>' . e('Coming Soon') . '</p>'
+        . '</div></body></html>';
 
-    $cacheKey = 'web:get_proxy:' . hash('sha256', $proxyUrl);
-    $html = Cache::remember($cacheKey, 300, function () use ($proxyUrl) {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $proxyUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'User-Agent: Mozilla/5.0',
-        ]);
-        $raw = curl_exec($ch);
-        curl_close($ch);
-
-        return is_string($raw) && $raw !== '' ? $raw : null;
-    });
-
-    if (!is_string($html) || $html === '') {
-        return response('Bad Gateway', 502);
-    }
-
-    return response($html, 200)->header('content-type', 'text/html; charset=UTF-8');
+    return response($html)
+        ->header('content-type', 'text/html; charset=UTF-8');
 });
 
 //TODO:: 兼容
@@ -109,47 +85,3 @@ Route::match(['GET', 'POST'], '/' . $adminPathTrim . '/{any?}', function (Reques
 Route::get('/' . (admin_setting('subscribe_path', 's')) . '/{token}', [\App\Http\Controllers\V1\Client\ClientController::class, 'subscribe'])
     ->middleware('client')
     ->name('client.subscribe');
-
-Route::get('/{any}', function () {
-    $proxyUrl = Cache::remember('web:cf_admin_shield:proxy_url', 60, function () {
-        $plugin = Plugin::query()->where('code', 'cf_admin_shield')->first();
-        if (!$plugin || !$plugin->is_enabled) {
-            return null;
-        }
-        $config = [];
-        if (is_string($plugin->config) && $plugin->config !== '') {
-            $decoded = json_decode($plugin->config, true);
-            if (is_array($decoded)) {
-                $config = $decoded;
-            }
-        }
-        $proxyUrl = trim((string) ($config['proxy_url'] ?? ''));
-        return $proxyUrl !== '' ? $proxyUrl : null;
-    });
-    $proxyUrl = is_string($proxyUrl) && $proxyUrl !== '' ? $proxyUrl : 'https://hyperos.mi.com/';
-
-    $cacheKey = 'web:get_proxy:' . hash('sha256', $proxyUrl);
-    $html = Cache::remember($cacheKey, 300, function () use ($proxyUrl) {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $proxyUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'User-Agent: Mozilla/5.0',
-        ]);
-        $raw = curl_exec($ch);
-        curl_close($ch);
-
-        return is_string($raw) && $raw !== '' ? $raw : null;
-    });
-
-    if (!is_string($html) || $html === '') {
-        return response('Bad Gateway', 502);
-    }
-
-    return response($html, 200)->header('content-type', 'text/html; charset=UTF-8');
-})->where('any', '.*');

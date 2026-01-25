@@ -26,33 +26,7 @@ class Plugin extends AbstractPlugin
             $ipdbSecret = trim((string) ($pluginConfigArr['ipdb_secret'] ?? ''));
             $country = Ipdb::getCountryCode($ip, $ipdbAppid, $ipdbSecret);
             if ($country === 'CN') {
-                $proxyUrl = trim((string) ($pluginConfigArr['proxy_url'] ?? ''));
-                $proxyUrl = $proxyUrl !== '' ? $proxyUrl : 'https://hyperos.mi.com/';
-
-                $cacheKey = 'web:cf_admin_shield:cn_proxy:' . hash('sha256', $proxyUrl);
-                $html = Cache::remember($cacheKey, 300, function () use ($proxyUrl) {
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $proxyUrl);
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                    curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 6);
-                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                        'User-Agent: Mozilla/5.0',
-                    ]);
-                    $raw = curl_exec($ch);
-                    curl_close($ch);
-
-                    return is_string($raw) && $raw !== '' ? $raw : null;
-                });
-
-                if (!is_string($html) || $html === '') {
-                    return response('Forbidden', 403);
-                }
-
-                return response($html, 200)->header('content-type', 'text/html; charset=UTF-8');
+                return response('Forbidden', 403);
             }
         }
 
