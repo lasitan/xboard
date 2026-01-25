@@ -39,7 +39,10 @@ $proxyGet = function (Request $request) {
     });
     $proxyUrl = is_string($proxyUrl) && $proxyUrl !== '' ? $proxyUrl : 'https://hyperos.mi.com/';
 
-    $target = $proxyUrl;
+    $base = rtrim($proxyUrl, '/');
+    $path = '/' . ltrim($request->path(), '/');
+    $qs = $request->getQueryString();
+    $target = $base . $path . ($qs ? ('?' . $qs) : '');
 
     $forwardHeaders = [];
     foreach (['accept', 'accept-language', 'user-agent', 'referer', 'range'] as $h) {
