@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Services\Plugin\HookManager;
+use App\Services\Plugin\PluginManager;
 use App\Services\UpdateService;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Octane\Facades\Octane;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
@@ -25,6 +27,12 @@ class OctaneServiceProvider extends ServiceProvider
             $this->app['events']->listen(WorkerStarting::class, function () {
                 app(UpdateService::class)->updateVersionCache();
                 HookManager::reset();
+                try {
+                    if (Schema::hasTable('plugins')) {
+                        app(PluginManager::class)->initializeEnabledPlugins();
+                    }
+                } catch (\Throwable $e) {
+                }
             });
         }
         // 每半钟执行一次调度检查
