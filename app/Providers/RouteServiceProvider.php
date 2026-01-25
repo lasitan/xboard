@@ -2,9 +2,7 @@
 
 namespace App\Providers;
 
-use App\Services\Plugin\PluginManager;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
@@ -40,14 +38,6 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function map()
     {
-        try {
-            if (Schema::hasTable('plugins')) {
-                app(PluginManager::class)->initializeEnabledPlugins();
-            }
-        } catch (\Throwable $e) {
-            // ignore
-        }
-
         $this->mapApiRoutes();
         $this->mapWebRoutes();
 
