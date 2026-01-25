@@ -223,12 +223,6 @@ class MailService
         $email = $params['email'];
         $subject = $params['subject'];
         $params['template_name'] = 'mail.' . admin_setting('email_template', 'default') . '.' . $params['template_name'];
-        if (!isset($params['template_value']) || !is_array($params['template_value'])) {
-            $params['template_value'] = [];
-        }
-        if (!array_key_exists('logo', $params['template_value'])) {
-            $params['template_value']['logo'] = admin_setting('logo');
-        }
         try {
             Mail::send(
                 $params['template_name'],

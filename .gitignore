@@ -32,4 +32,3 @@ docker-compose.yaml
 bun.lockb
 compose.yaml
 .scribe
-resources/views/mail/heixin
