@@ -10,7 +10,7 @@ class AdminShield
 {
     public static function handle(Request $request, array $pluginConfigArr)
     {
-        $enabled = (bool) ($pluginConfigArr['enabled'] ?? true);
+        $enabled = (bool) ($pluginConfigArr['enabled'] ?? false);
         if (!$enabled) {
             return null;
         }

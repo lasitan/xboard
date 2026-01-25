@@ -15,7 +15,7 @@ class Plugin extends AbstractPlugin
 {
     public static function handleWeb(Request $request, array $pluginConfigArr, string $adminPath)
     {
-        $enabled = (bool) ($pluginConfigArr['enabled'] ?? true);
+        $enabled = (bool) ($pluginConfigArr['enabled'] ?? false);
         if (!$enabled) {
             return null;
         }
@@ -62,7 +62,7 @@ class Plugin extends AbstractPlugin
 
     public function boot(): void
     {
-        if (!$this->getConfig('enabled', true)) {
+        if (!$this->getConfig('enabled', false)) {
             return;
         }
 
