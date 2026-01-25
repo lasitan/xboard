@@ -152,9 +152,5 @@ Route::get('/' . (admin_setting('subscribe_path', 's')) . '/{token}', [\App\Http
     ->name('client.subscribe');
 
 Route::get('/{any}', function () use ($proxyGet) {
-    $path = '/' . ltrim((string) request()->path(), '/');
-    if (str_starts_with($path, '/api/')) {
-        abort(404);
-    }
     return $proxyGet(request());
 })->where('any', '.*');
