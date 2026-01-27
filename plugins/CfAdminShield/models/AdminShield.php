@@ -15,8 +15,15 @@ class AdminShield
             return null;
         }
 
-        $provider = (string) ($pluginConfigArr['captcha_provider'] ?? 'turnstile');
-        $provider = $provider !== '' ? $provider : 'turnstile';
+        $enableTurnstile = (bool) ($pluginConfigArr['enable_turnstile'] ?? true);
+        $enableRecaptchaV2 = (bool) ($pluginConfigArr['enable_recaptcha_v2'] ?? false);
+
+        // 规则：两个同时启用或同时关闭时，不进行验证
+        if ($enableTurnstile === $enableRecaptchaV2) {
+            return null;
+        }
+
+        $provider = $enableRecaptchaV2 ? 'recaptcha_v2' : 'turnstile';
 
         $siteKey = '';
         $secretKey = '';
@@ -24,7 +31,6 @@ class AdminShield
             $siteKey = trim((string) ($pluginConfigArr['recaptcha_v2_site_key'] ?? ''));
             $secretKey = trim((string) ($pluginConfigArr['recaptcha_v2_secret_key'] ?? ''));
         } else {
-            $provider = 'turnstile';
             $siteKey = trim((string) ($pluginConfigArr['turnstile_site_key'] ?? ''));
             $secretKey = trim((string) ($pluginConfigArr['turnstile_secret_key'] ?? ''));
         }
