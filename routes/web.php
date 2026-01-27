@@ -47,12 +47,19 @@ Route::get('/', function (Request $request) {
     abort(404);
 })->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
-//TODO:: 兼容
-$adminPath = (string) admin_setting('secure_path', admin_setting('frontend_admin_path', hash('crc32b', config('app.key'))));
-$adminPath = '/' . trim($adminPath, '/');
-$adminPathTrim = ltrim($adminPath, '/');
+Route::get('/' . (admin_setting('subscribe_path', 's')) . '/{token}', [\App\Http\Controllers\V1\Client\ClientController::class, 'subscribe'])
+    ->middleware('client')
+    ->name('client.subscribe');
 
-Route::match(['GET', 'POST'], '/' . $adminPathTrim . '/{any?}', function (Request $request) use ($adminPath) {
+Route::match(['GET', 'POST'], '/{any?}', function (Request $request) {
+    $adminPath = (string) admin_setting('secure_path', admin_setting('frontend_admin_path', hash('crc32b', config('app.key'))));
+    $adminPath = '/' . trim($adminPath, '/');
+    $adminPathTrim = ltrim($adminPath, '/');
+
+    $path = ltrim((string) $request->path(), '/');
+    if ($path !== $adminPathTrim && !str_starts_with($path, $adminPathTrim . '/')) {
+        abort(404);
+    }
 
     $pluginConfig = Cache::remember('web:cf_admin_shield:plugin_config', 60, function () {
         $plugin = Plugin::query()->where('code', 'cf_admin_shield')->first();
@@ -87,7 +94,3 @@ Route::match(['GET', 'POST'], '/' . $adminPathTrim . '/{any?}', function (Reques
         'secure_path' => admin_setting('secure_path', admin_setting('frontend_admin_path', hash('crc32b', config('app.key'))))
     ]);
 })->where('any', '.*');
-
-Route::get('/' . (admin_setting('subscribe_path', 's')) . '/{token}', [\App\Http\Controllers\V1\Client\ClientController::class, 'subscribe'])
-    ->middleware('client')
-    ->name('client.subscribe');
