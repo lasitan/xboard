@@ -58,6 +58,12 @@ Route::match(['GET', 'POST'], '/{any?}', function (Request $request) {
 
     $path = ltrim((string) $request->path(), '/');
     if ($path !== $adminPathTrim && !str_starts_with($path, $adminPathTrim . '/')) {
+        if ((string) $request->query('__debug_secure_path', '') === '1') {
+            return response('Not Found', 404)
+                ->header('x-debug-secure-path', $adminPathTrim)
+                ->header('x-debug-request-path', $path)
+                ->header('x-debug-host', (string) $request->getHost());
+        }
         abort(404);
     }
 
