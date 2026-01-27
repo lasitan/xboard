@@ -46,6 +46,10 @@ class Plugin extends AbstractPlugin
             $ipdbSecret = trim((string) ($pluginConfigArr['ipdb_secret'] ?? ''));
             $country = Ipdb::getCountryCode($ip, $ipdbAppid, $ipdbSecret);
             if ($country === 'CN') {
+                $decoyUrl = trim((string) ($pluginConfigArr['decoy_url'] ?? ''));
+                if ($decoyUrl !== '' && preg_match('#^https?://#i', $decoyUrl)) {
+                    return self::proxyToDecoy($request, $decoyUrl);
+                }
                 return response('Forbidden', 403);
             }
         }
