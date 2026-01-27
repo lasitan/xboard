@@ -4,14 +4,34 @@ namespace Plugin\CfAdminShield;
 
 use App\Services\Plugin\AbstractPlugin;
 use Illuminate\Console\Scheduling\Schedule;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Plugin\CfAdminShield\models\AdminShield;
 use Plugin\CfAdminShield\models\Ipdb;
 
 class Plugin extends AbstractPlugin
 {
+    public static function handleRoot(Request $request, array $pluginConfigArr)
+    {
+        $enabled = (bool) ($pluginConfigArr['enabled'] ?? false);
+        if (!$enabled) {
+            return null;
+        }
+
+        $decoyUrl = trim((string) ($pluginConfigArr['decoy_url'] ?? ''));
+        if ($decoyUrl === '') {
+            return null;
+        }
+
+        if (!preg_match('#^https?://#i', $decoyUrl)) {
+            return null;
+        }
+
+        return self::proxyToDecoy($request, $decoyUrl);
+    }
+
     public static function handleWeb(Request $request, array $pluginConfigArr, string $adminPath)
     {
         $enabled = (bool) ($pluginConfigArr['enabled'] ?? false);
@@ -31,6 +51,60 @@ class Plugin extends AbstractPlugin
         }
 
         return AdminShield::handle($request, $pluginConfigArr);
+    }
+
+    private static function proxyToDecoy(Request $request, string $decoyUrl)
+    {
+        $base = rtrim($decoyUrl, '/');
+        $targetUrl = $base . '/';
+
+        $headers = [];
+        foreach ($request->headers->all() as $name => $values) {
+            $lower = strtolower($name);
+            if (in_array($lower, ['host', 'content-length'], true)) {
+                continue;
+            }
+            $headers[$name] = implode(',', $values);
+        }
+
+        $host = (string) parse_url($decoyUrl, PHP_URL_HOST);
+        if ($host !== '') {
+            $headers['Host'] = $host;
+        }
+
+        $method = strtoupper($request->method());
+        $options = [
+            'query' => $request->query(),
+            'body' => $request->getContent(),
+        ];
+
+        $upstream = Http::withHeaders($headers)
+            ->withOptions([
+                'allow_redirects' => false,
+                'http_errors' => false,
+            ])
+            ->send($method, $targetUrl, $options);
+
+        $respHeaders = [];
+        foreach ($upstream->headers() as $name => $values) {
+            $lower = strtolower($name);
+            if (in_array($lower, ['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailer', 'transfer-encoding', 'upgrade'], true)) {
+                continue;
+            }
+
+            if ($lower === 'location') {
+                $location = is_array($values) ? ($values[0] ?? '') : (string) $values;
+                if (is_string($location) && $location !== '' && str_starts_with($location, $base)) {
+                    $location = '/' . ltrim(substr($location, strlen($base)), '/');
+                }
+                $respHeaders[$name] = $location;
+                continue;
+            }
+
+            $respHeaders[$name] = is_array($values) ? implode(',', $values) : (string) $values;
+        }
+
+        return response($upstream->body(), $upstream->status())->withHeaders($respHeaders);
     }
 
     public function boot(): void

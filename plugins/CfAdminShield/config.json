@@ -44,6 +44,12 @@
       "default": "",
       "label": "Turnstile 私密密钥（Secret Key）",
       "description": "Cloudflare Turnstile 的私密密钥（用于服务端校验）"
+    },
+    "decoy_url": {
+      "type": "string",
+      "default": "",
+      "label": "伪装地址",
+      "description": "以反向代理方式返回该地址的内容"
     }
   }
 }
