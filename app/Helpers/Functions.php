@@ -23,7 +23,9 @@ if (!function_exists('admin_setting')) {
             return '';
         }
 
-        $default = config('v2board.' . $key) ?? $default;
+        if ($default === null) {
+            $default = config('v2board.' . $key);
+        }
         return $setting->get($key) ?? $default;
     }
 }
