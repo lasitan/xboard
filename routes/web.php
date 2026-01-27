@@ -45,7 +45,7 @@ Route::get('/', function (Request $request) {
     }
 
     abort(404);
-});
+})->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 //TODO:: 兼容
 $adminPath = (string) admin_setting('secure_path', admin_setting('frontend_admin_path', hash('crc32b', config('app.key'))));

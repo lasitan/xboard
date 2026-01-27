@@ -65,7 +65,7 @@ class Plugin extends AbstractPlugin
         $headers = [];
         foreach ($request->headers->all() as $name => $values) {
             $lower = strtolower($name);
-            if (in_array($lower, ['host', 'content-length'], true)) {
+            if (in_array($lower, ['host', 'content-length', 'cookie'], true)) {
                 continue;
             }
             $headers[$name] = implode(',', $values);
@@ -90,7 +90,6 @@ class Plugin extends AbstractPlugin
             ->send($method, $targetUrl, $options);
 
         $respHeaders = [];
-        $setCookieLines = [];
         foreach ($upstream->headers() as $name => $values) {
             $lower = strtolower($name);
             if (in_array($lower, ['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'content-length'], true)) {
@@ -98,18 +97,6 @@ class Plugin extends AbstractPlugin
             }
 
             if ($lower === 'set-cookie') {
-                if (is_array($values)) {
-                    foreach ($values as $line) {
-                        if (is_string($line) && $line !== '') {
-                            $setCookieLines[] = $line;
-                        }
-                    }
-                } else {
-                    $line = (string) $values;
-                    if ($line !== '') {
-                        $setCookieLines[] = $line;
-                    }
-                }
                 continue;
             }
 
@@ -125,12 +112,7 @@ class Plugin extends AbstractPlugin
             $respHeaders[$name] = is_array($values) ? implode(',', $values) : (string) $values;
         }
 
-        $response = response($upstream->body(), $upstream->status())->withHeaders($respHeaders);
-        foreach ($setCookieLines as $line) {
-            $response->headers->set('Set-Cookie', $line, false);
-        }
-
-        return $response;
+        return response($upstream->body(), $upstream->status())->withHeaders($respHeaders);
     }
 
     public function boot(): void
