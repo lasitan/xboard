@@ -13,6 +13,8 @@ use Plugin\CfAdminShield\models\Ipdb;
 
 class Plugin extends AbstractPlugin
 {
+    private static bool $decoyCacheWarmed = false;
+
     public static function handleRoot(Request $request, array $pluginConfigArr)
     {
         $enabled = (bool) ($pluginConfigArr['enabled'] ?? false);
@@ -62,6 +64,23 @@ class Plugin extends AbstractPlugin
         $base = rtrim($decoyUrl, '/');
         $targetUrl = $base . '/';
 
+        $cacheKey = 'web:cf_admin_shield:decoy:' . hash('sha256', $targetUrl);
+        $useCache = $request->isMethod('get') && $request->query->count() === 0 && $request->getContent() === '';
+        if ($useCache) {
+            if (!self::$decoyCacheWarmed) {
+                $cached = Cache::get($cacheKey);
+                if (is_array($cached) && isset($cached['status'], $cached['headers'], $cached['body'])) {
+                    Cache::put($cacheKey, $cached, 3 * 60 * 60);
+                }
+                self::$decoyCacheWarmed = true;
+            } else {
+                $cached = Cache::get($cacheKey);
+                if (is_array($cached) && isset($cached['status'], $cached['headers'], $cached['body'])) {
+                    return response($cached['body'], (int) $cached['status'])->withHeaders((array) $cached['headers']);
+                }
+            }
+        }
+
         $headers = [];
         foreach ($request->headers->all() as $name => $values) {
             $lower = strtolower($name);
@@ -110,6 +129,14 @@ class Plugin extends AbstractPlugin
             }
 
             $respHeaders[$name] = is_array($values) ? implode(',', $values) : (string) $values;
+        }
+
+        if ($useCache) {
+            Cache::put($cacheKey, [
+                'status' => $upstream->status(),
+                'headers' => $respHeaders,
+                'body' => $upstream->body(),
+            ], 3 * 60 * 60);
         }
 
         return response($upstream->body(), $upstream->status())->withHeaders($respHeaders);
