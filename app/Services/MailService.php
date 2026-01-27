@@ -220,6 +220,12 @@ class MailService
             Config::set('mail.from.address', admin_setting('email_from_address', config('mail.from.address')));
             Config::set('mail.from.name', admin_setting('app_name', 'XBoard'));
         }
+
+        if (!isset($params['template_value']) || !is_array($params['template_value'])) {
+            $params['template_value'] = [];
+        }
+        $params['template_value']['logo'] = admin_setting('logo');
+
         $email = $params['email'];
         $subject = $params['subject'];
         $params['template_name'] = 'mail.' . admin_setting('email_template', 'default') . '.' . $params['template_name'];
