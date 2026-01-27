@@ -11,13 +11,13 @@
   "config": {
     "enabled": {
       "type": "boolean",
-      "default": false,
+      "default": true,
       "label": "启用防护",
-      "description": "为管理后台的 secure_path 启用 Turnstile 人机验证保护"
+      "description": "为 Xboard 页面启用人机验证保护"
     },
     "allow_cn_ip": {
       "type": "boolean",
-      "default": true,
+      "default": false,
       "label": "允许 CN IP 访问",
       "description": "关闭后，将禁止中国（CN）IP 访问管理后台入口"
     },
