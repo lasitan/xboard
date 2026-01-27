@@ -90,9 +90,26 @@ class Plugin extends AbstractPlugin
             ->send($method, $targetUrl, $options);
 
         $respHeaders = [];
+        $setCookieLines = [];
         foreach ($upstream->headers() as $name => $values) {
             $lower = strtolower($name);
-            if (in_array($lower, ['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailer', 'transfer-encoding', 'upgrade'], true)) {
+            if (in_array($lower, ['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'content-length'], true)) {
+                continue;
+            }
+
+            if ($lower === 'set-cookie') {
+                if (is_array($values)) {
+                    foreach ($values as $line) {
+                        if (is_string($line) && $line !== '') {
+                            $setCookieLines[] = $line;
+                        }
+                    }
+                } else {
+                    $line = (string) $values;
+                    if ($line !== '') {
+                        $setCookieLines[] = $line;
+                    }
+                }
                 continue;
             }
 
@@ -108,7 +125,12 @@ class Plugin extends AbstractPlugin
             $respHeaders[$name] = is_array($values) ? implode(',', $values) : (string) $values;
         }
 
-        return response($upstream->body(), $upstream->status())->withHeaders($respHeaders);
+        $response = response($upstream->body(), $upstream->status())->withHeaders($respHeaders);
+        foreach ($setCookieLines as $line) {
+            $response->headers->set('Set-Cookie', $line, false);
+        }
+
+        return $response;
     }
 
     public function boot(): void
