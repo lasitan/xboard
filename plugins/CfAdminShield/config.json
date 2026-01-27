@@ -25,25 +25,31 @@
       "type": "string",
       "default": "",
       "label": "IPDB APPID",
-      "description": "用于 IPDB API（/api/v1/paas/ip/fetch）的 APPID"
+      "description": "用于 IPDB API的 APPID"
     },
     "ipdb_secret": {
       "type": "string",
       "default": "",
       "label": "IPDB 密钥",
-      "description": "用于生成 datasign 的密钥（appse/secret）"
+      "description": "用于生成 datasign 的密钥"
     },
     "turnstile_site_key": {
       "type": "string",
       "default": "",
       "label": "Turnstile 站点密钥（Site Key）",
-      "description": "Cloudflare Turnstile 的站点密钥（前端公钥）"
+      "description": "Cloudflare Turnstile 站点密钥"
     },
     "turnstile_secret_key": {
       "type": "string",
       "default": "",
       "label": "Turnstile 私密密钥（Secret Key）",
-      "description": "Cloudflare Turnstile 的私密密钥（用于服务端校验）"
+      "description": "Cloudflare Turnstile 私密密钥"
+    },
+    "protect_domain": {
+      "type": "string",
+      "default": "",
+      "label": "保护域名",
+      "description": "仅当请求域名等于该域名时才允许访问"
     },
     "decoy_url": {
       "type": "string",

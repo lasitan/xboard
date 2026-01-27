@@ -15,11 +15,34 @@ class Plugin extends AbstractPlugin
 {
     private static bool $decoyCacheWarmed = false;
 
+    private static function isProtectedDomainAllowed(Request $request, array $pluginConfigArr): bool
+    {
+        $protectDomain = strtolower(trim((string) ($pluginConfigArr['protect_domain'] ?? '')));
+        if ($protectDomain === '') {
+            return true;
+        }
+
+        $host = strtolower((string) $request->getHost());
+        if ($host === 'localhost' || $host === '127.0.0.1' || $host === '::1') {
+            return true;
+        }
+
+        if (str_contains($protectDomain, ':')) {
+            $protectDomain = strtolower((string) parse_url('http://' . $protectDomain, PHP_URL_HOST));
+        }
+
+        return $host === $protectDomain;
+    }
+
     public static function handleRoot(Request $request, array $pluginConfigArr)
     {
         $enabled = (bool) ($pluginConfigArr['enabled'] ?? false);
         if (!$enabled) {
             return null;
+        }
+
+        if (!self::isProtectedDomainAllowed($request, $pluginConfigArr)) {
+            abort(404);
         }
 
         $decoyUrl = trim((string) ($pluginConfigArr['decoy_url'] ?? ''));
@@ -39,6 +62,10 @@ class Plugin extends AbstractPlugin
         $enabled = (bool) ($pluginConfigArr['enabled'] ?? false);
         if (!$enabled) {
             return null;
+        }
+
+        if (!self::isProtectedDomainAllowed($request, $pluginConfigArr)) {
+            abort(404);
         }
 
         $allowCnIp = (bool) ($pluginConfigArr['allow_cn_ip'] ?? true);
