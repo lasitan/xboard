@@ -1,9 +1,9 @@
 {
-  "name": "Cloudflare 管理后台防护",
+  "name": "Xboard网页防护",
   "code": "cf_admin_shield",
   "type": "feature",
-  "version": "1.0.0",
-  "description": "使用 Cloudflare Turnstile（服务端校验）保护管理后台的 secure_path。",
+  "version": "1.1.0",
+  "description": "使用 Cloudflare Turnstile保护Xboard上的所有网页。",
   "author": "chenchen71956",
   "require": {
     "xboard": ">=1.0.0"
@@ -33,6 +33,16 @@
       "label": "IPDB 密钥",
       "description": "用于生成 datasign 的密钥"
     },
+    "captcha_provider": {
+      "type": "select",
+      "default": "turnstile",
+      "label": "验证码类型",
+      "description": "选择使用 Cloudflare Turnstile 或 Google reCAPTCHA v2",
+      "options": {
+        "turnstile": "Cloudflare Turnstile",
+        "recaptcha_v2": "Google reCAPTCHA v2"
+      }
+    },
     "turnstile_site_key": {
       "type": "string",
       "default": "",
@@ -44,6 +54,18 @@
       "default": "",
       "label": "Turnstile 私密密钥（Secret Key）",
       "description": "Cloudflare Turnstile 私密密钥"
+    },
+    "recaptcha_v2_site_key": {
+      "type": "string",
+      "default": "",
+      "label": "reCAPTCHA v2 站点密钥（Site Key）",
+      "description": "Google reCAPTCHA v2 站点密钥"
+    },
+    "recaptcha_v2_secret_key": {
+      "type": "string",
+      "default": "",
+      "label": "reCAPTCHA v2 私密密钥（Secret Key）",
+      "description": "Google reCAPTCHA v2 私密密钥"
     },
     "protect_domain": {
       "type": "string",

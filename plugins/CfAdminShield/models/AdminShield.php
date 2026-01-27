@@ -14,8 +14,20 @@ class AdminShield
         if (!$enabled) {
             return null;
         }
-        $siteKey = trim((string) ($pluginConfigArr['turnstile_site_key'] ?? ''));
-        $secretKey = trim((string) ($pluginConfigArr['turnstile_secret_key'] ?? ''));
+
+        $provider = (string) ($pluginConfigArr['captcha_provider'] ?? 'turnstile');
+        $provider = $provider !== '' ? $provider : 'turnstile';
+
+        $siteKey = '';
+        $secretKey = '';
+        if ($provider === 'recaptcha_v2') {
+            $siteKey = trim((string) ($pluginConfigArr['recaptcha_v2_site_key'] ?? ''));
+            $secretKey = trim((string) ($pluginConfigArr['recaptcha_v2_secret_key'] ?? ''));
+        } else {
+            $provider = 'turnstile';
+            $siteKey = trim((string) ($pluginConfigArr['turnstile_site_key'] ?? ''));
+            $secretKey = trim((string) ($pluginConfigArr['turnstile_secret_key'] ?? ''));
+        }
 
         if ($siteKey === '' || $secretKey === '') {
             return null;
@@ -34,9 +46,15 @@ class AdminShield
 
         if ($request->isMethod('post')) {
             $redirectTo = (string) $request->input('redirect_to', $postUrl);
-            $turnstileResponse = (string) $request->input('cf-turnstile-response', '');
 
-            $ok = self::verifyTurnstile($secretKey, $turnstileResponse, $ip);
+            $ok = false;
+            if ($provider === 'recaptcha_v2') {
+                $recaptchaResponse = (string) $request->input('g-recaptcha-response', '');
+                $ok = self::verifyRecaptchaV2($secretKey, $recaptchaResponse, $ip);
+            } else {
+                $turnstileResponse = (string) $request->input('cf-turnstile-response', '');
+                $ok = self::verifyTurnstile($secretKey, $turnstileResponse, $ip);
+            }
             if ($ok) {
                 $newToken = Str::random(48);
                 self::storeVerified($newToken, $ip, $ua);
@@ -45,10 +63,10 @@ class AdminShield
                 return $response;
             }
 
-            return self::renderChallenge($siteKey, true, $redirectTo);
+            return self::renderChallenge($provider, $siteKey, true, $redirectTo);
         }
 
-        return self::renderChallenge($siteKey, false, $postUrl);
+        return self::renderChallenge($provider, $siteKey, false, $postUrl);
     }
 
     private static function isVerified(string $token, string $ip, string $ua): bool
@@ -76,7 +94,7 @@ class AdminShield
         Cache::put($key, ['ip' => $ip, 'ua' => $ua], 600);
     }
 
-    private static function renderChallenge(string $siteKey, bool $failed, string $postUrl)
+    private static function renderChallenge(string $provider, string $siteKey, bool $failed, string $postUrl)
     {
         $title = 'Admin verification';
         $message = $failed ? 'Verification failed, please try again.' : 'Please complete the verification to continue.';
@@ -84,7 +102,9 @@ class AdminShield
         $html = '<!doctype html><html lang="en"><head><meta charset="UTF-8" />'
             . '<meta name="viewport" content="width=device-width,initial-scale=1" />'
             . '<title>' . e($title) . '</title>'
-            . '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>'
+            . ($provider === 'recaptcha_v2'
+                ? '<script src="https://www.google.com/recaptcha/api.js" async defer></script>'
+                : '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>')
             . '<style>'
             . 'html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}'
             . 'body{display:flex;align-items:center;justify-content:center;background:#0b1220;color:#e5e7eb;}'
@@ -106,7 +126,9 @@ class AdminShield
         $html .= '<form method="POST" action="' . e($postUrl) . '">' 
             . '<input type="hidden" name="_token" value="' . e(csrf_token()) . '" />'
             . '<input type="hidden" name="redirect_to" value="' . e($postUrl) . '" />'
-            . '<div class="cf-turnstile" data-sitekey="' . e($siteKey) . '"></div>'
+            . ($provider === 'recaptcha_v2'
+                ? '<div class="g-recaptcha" data-sitekey="' . e($siteKey) . '"></div>'
+                : '<div class="cf-turnstile" data-sitekey="' . e($siteKey) . '"></div>')
             . '<button type="submit">Continue</button>'
             . '</form>'
             . '</div></div></body></html>';
@@ -130,6 +152,40 @@ class AdminShield
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, 'https://challenges.cloudflare.com/turnstile/v0/siteverify');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        $raw = curl_exec($ch);
+        curl_close($ch);
+
+        if (!is_string($raw) || $raw === '') {
+            return false;
+        }
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return false;
+        }
+        return (bool) ($decoded['success'] ?? false);
+    }
+
+    private static function verifyRecaptchaV2(string $secretKey, string $responseToken, ?string $remoteIp = null): bool
+    {
+        if ($secretKey === '' || $responseToken === '') {
+            return false;
+        }
+
+        $payload = [
+            'secret' => $secretKey,
+            'response' => $responseToken,
+        ];
+        if ($remoteIp) {
+            $payload['remoteip'] = $remoteIp;
+        }
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://www.google.com/recaptcha/api/siteverify');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
