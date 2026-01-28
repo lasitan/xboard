@@ -10,6 +10,7 @@ use Illuminate\Contracts\Cache\Repository;
 class Setting
 {
     const CACHE_KEY = 'admin_settings';
+    const CACHE_TTL = 300;
 
     private Repository $cache;
     private ?array $loadedSettings = null; // 请求内缓存
@@ -106,7 +107,7 @@ class Setting
         }
 
         try {
-            $settings = $this->cache->rememberForever(self::CACHE_KEY, function (): array {
+            $settings = $this->cache->remember(self::CACHE_KEY, self::CACHE_TTL, function (): array {
                 return array_change_key_case(
                     SettingModel::pluck('value', 'name')->toArray(),
                     CASE_LOWER

@@ -29,5 +29,14 @@ class SettingServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        if ($this->app->runningInConsole()) {
+            return;
+        }
+
+        try {
+            app(Setting::class)->toArray();
+        } catch (\Throwable) {
+            // no-op
+        }
     }
 }
