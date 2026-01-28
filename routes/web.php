@@ -99,4 +99,4 @@ Route::match(['GET', 'POST'], '/{any?}', function (Request $request) {
         'logo' => admin_setting('logo'),
         'secure_path' => admin_setting('secure_path', admin_setting('frontend_admin_path', hash('crc32b', config('app.key'))))
     ]);
-})->where('any', '.*');
+})->where('any', '^(?!api/).*$');
