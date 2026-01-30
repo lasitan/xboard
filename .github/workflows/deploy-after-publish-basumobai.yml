@@ -15,12 +15,12 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ secrets.SSH_PORT }}
+          host: ${{ secrets.BASUMOBAI_SSH_HOST }}
+          username: ${{ secrets.BASUMOBAI_SSH_USER }}
+          password: ${{ secrets.BASUMOBAI_SSH_PASSWORD }}
+          port: ${{ secrets.BASUMOBAI_SSH_PORT }}
           script: |
-            cd /home/apifu
+            cd /home/vpn
             docker compose pull
             docker compose run --rm web php artisan xboard:update
             docker compose up -d
