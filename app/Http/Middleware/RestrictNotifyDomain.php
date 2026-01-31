@@ -36,6 +36,9 @@ class RestrictNotifyDomain
                 ->all();
         });
 
+        $debug = (string) $request->query('__debug_notify_domain', '');
+        $debugEnabled = $debug === '1';
+
         if (in_array($hostKey, $notifyHosts, true)) {
             if ($request->isMethod('options')) {
                 return $next($request);
@@ -53,7 +56,17 @@ class RestrictNotifyDomain
                 && !str_starts_with($path, 'api/v1/guest/payment/notify/')
                 || !in_array(strtolower($request->method()), ['get', 'post'], true)
             ) {
-                return response('Not Found', 404);
+                $resp = response('Not Found', 404);
+                if ($debugEnabled) {
+                    $resp->headers->set('x-debug-notify-domain-hostkey', (string) $hostKey);
+                    $resp->headers->set('x-debug-notify-domain-in-hosts', '1');
+                    $resp->headers->set('x-debug-notify-domain-path', (string) $path);
+                    $resp->headers->set('x-debug-notify-domain-method', strtolower((string) $request->method()));
+                    $resp->headers->set('x-debug-notify-domain-subscribe-path', (string) $subscribePath);
+                    $resp->headers->set('x-debug-notify-domain-is-subscribe', $isSubscribePath ? '1' : '0');
+                    $resp->headers->set('x-debug-notify-domain-is-notify', str_starts_with($path, 'api/v1/guest/payment/notify/') ? '1' : '0');
+                }
+                return $resp;
             }
         }
 
