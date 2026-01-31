@@ -42,8 +42,15 @@ class RestrictNotifyDomain
             }
 
             $path = ltrim($request->path(), '/');
+            $subscribePath = trim((string) admin_setting('subscribe_path', 's'), '/');
+            $isSubscribePath = $subscribePath !== ''
+                && $request->isMethod('get')
+                && (
+                    str_starts_with($path, $subscribePath . '/')
+                );
             if (
-                !str_starts_with($path, 'api/v1/guest/payment/notify/')
+                !$isSubscribePath
+                && !str_starts_with($path, 'api/v1/guest/payment/notify/')
                 || !in_array(strtolower($request->method()), ['get', 'post'], true)
             ) {
                 return response('Not Found', 404);
