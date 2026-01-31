@@ -122,22 +122,46 @@ class Helper
     public static function getSubscribeUrl(string $token, $subscribeUrl = null)
     {
         $path = route('client.subscribe', ['token' => $token], false);
-        
+
         if ($subscribeUrl) {
-            $finalUrl = rtrim($subscribeUrl, '/') . $path;
-            return HookManager::filter('subscribe.url', $finalUrl);
+            $subscribeUrlList = is_array($subscribeUrl)
+                ? $subscribeUrl
+                : explode(',', (string) $subscribeUrl);
+        } else {
+            $subscribeUrlSetting = admin_setting('subscribe_url', '');
+            $subscribeUrlList = is_array($subscribeUrlSetting)
+                ? $subscribeUrlSetting
+                : explode(',', (string) $subscribeUrlSetting);
         }
-        
-        $urlString = (string)admin_setting('subscribe_url', '');
-        $subscribeUrlList = $urlString ? explode(',', $urlString) : [];
-        
+
+        $subscribeUrlList = collect($subscribeUrlList)
+            ->map(fn($v) => trim((string) $v))
+            ->filter(fn($v) => $v !== '')
+            ->values()
+            ->all();
+
         if (empty($subscribeUrlList)) {
             return HookManager::filter('subscribe.url', url($path));
         }
-        
-        $selectedUrl = self::replaceByPattern(Arr::random($subscribeUrlList));
+
+        $selectedUrl = $subscribeUrlList[0];
+        try {
+            $current = request();
+            $currentSchemeHost = strtolower(rtrim($current->getSchemeAndHttpHost(), '/'));
+            foreach ($subscribeUrlList as $candidate) {
+                $candidateNorm = strtolower(rtrim((string) $candidate, '/'));
+                if ($candidateNorm === $currentSchemeHost) {
+                    $selectedUrl = $candidate;
+                    break;
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        $selectedUrl = self::replaceByPattern($selectedUrl);
         $finalUrl = rtrim($selectedUrl, '/') . $path;
-        
+
         return HookManager::filter('subscribe.url', $finalUrl);
     }
 
