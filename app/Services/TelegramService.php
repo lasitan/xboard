@@ -27,14 +27,19 @@ class TelegramService
             ]);
     }
 
-    public function sendMessage(int $chatId, string $text, string $parseMode = ''): void
+    public function sendMessage(int $chatId, string $text, string $parseMode = '', array|string|null $replyMarkup = null): void
     {
         $text = $parseMode === 'markdown' ? str_replace('_', '\_', $text) : $text;
+
+        if (is_array($replyMarkup)) {
+            $replyMarkup = json_encode($replyMarkup);
+        }
 
         $this->request('sendMessage', [
             'chat_id' => $chatId,
             'text' => $text,
             'parse_mode' => $parseMode ?: null,
+            'reply_markup' => $replyMarkup ?: null,
         ]);
     }
 

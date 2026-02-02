@@ -4,6 +4,7 @@ namespace App\Http\Routes\V1;
 use App\Http\Controllers\V1\Guest\CommController;
 use App\Http\Controllers\V1\Guest\PaymentController;
 use App\Http\Controllers\V1\Guest\PlanController;
+use App\Http\Controllers\V1\Guest\TelegramCaptchaController;
 use App\Http\Controllers\V1\Guest\TelegramController;
 use Illuminate\Contracts\Routing\Registrar;
 
@@ -18,6 +19,8 @@ class GuestRoute
             $router->get('/plan/fetch', [PlanController::class, 'fetch']);
             // Telegram
             $router->post('/telegram/webhook', [TelegramController::class, 'webhook']);
+            $router->get('/telegram/hcaptcha', [TelegramCaptchaController::class, 'show']);
+            $router->post('/telegram/hcaptcha', [TelegramCaptchaController::class, 'verify']);
             // Payment
             $router->match(['get', 'post'], '/payment/notify/{method}/{uuid}', [PaymentController::class, 'notify']);
             // Comm
