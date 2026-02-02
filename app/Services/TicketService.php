@@ -112,14 +112,14 @@ class TicketService
 
     private function getAdminNotifyEmails(): array
     {
-        $emails = trim((string) admin_setting('email_from_address', ''));
-        if ($emails === '') {
-            return [];
-        }
-
-        return collect(explode(',', $emails))
+        return User::query()
+            ->where('is_admin', 1)
+            ->whereNotNull('email')
+            ->where('email', '<>', '')
+            ->pluck('email')
             ->map(fn($v) => trim((string) $v))
             ->filter(fn($v) => $v !== '')
+            ->unique()
             ->values()
             ->all();
     }
