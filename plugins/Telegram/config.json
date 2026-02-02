@@ -20,6 +20,12 @@
             "label": "频道ID",
             "description": "用于在欢迎消息中推荐关注"
         },
+        "enable_hcaptcha": {
+            "type": "boolean",
+            "default": false,
+            "label": "开启 hCaptcha",
+            "description": "是否在入群欢迎消息中启用 hCaptcha 人机验证按钮"
+        },
         "hcaptcha_site_key": {
             "type": "string",
             "default": "",

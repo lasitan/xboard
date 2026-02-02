@@ -12,6 +12,10 @@ class TelegramCaptchaController extends Controller
 {
     public function show(Request $request)
     {
+        if (!(bool) $this->getTelegramPluginConfigValue('enable_hcaptcha', false)) {
+            return response('hCaptcha is disabled', 403);
+        }
+
         $siteKey = (string) $this->getTelegramPluginConfigValue('hcaptcha_site_key', '');
         if ($siteKey === '') {
             return response('hCaptcha is not configured', 500);
@@ -50,6 +54,10 @@ class TelegramCaptchaController extends Controller
 
     public function verify(Request $request)
     {
+        if (!(bool) $this->getTelegramPluginConfigValue('enable_hcaptcha', false)) {
+            return response('hCaptcha is disabled', 403);
+        }
+
         $secretKey = (string) $this->getTelegramPluginConfigValue('hcaptcha_secret_key', '');
         if ($secretKey === '') {
             return response('hCaptcha is not configured', 500);

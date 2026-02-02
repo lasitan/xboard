@@ -35,6 +35,7 @@ class Plugin extends AbstractPlugin
         }
 
         $channelId = trim((string) $this->getConfig('channel_id', ''));
+        $enableHcaptcha = (bool) $this->getConfig('enable_hcaptcha', false);
         $hcaptchaSiteKey = trim((string) $this->getConfig('hcaptcha_site_key', ''));
 
         $joinRequest = $payload['join_request'] ?? [];
@@ -47,7 +48,7 @@ class Plugin extends AbstractPlugin
 
         $replyMarkup = null;
         $buttons = [];
-        if ($hcaptchaSiteKey !== '' && $userId !== null) {
+        if ($enableHcaptcha && $hcaptchaSiteKey !== '' && $userId !== null) {
             $buttons[] = [
                 [
                     'text' => '人机验证',
@@ -74,7 +75,7 @@ class Plugin extends AbstractPlugin
 
         $text = $fullName !== '' ? "欢迎 {$fullName} 加入本群！" : '欢迎加入本群！';
 
-        if ($hcaptchaSiteKey !== '' && $userId !== null) {
+        if ($enableHcaptcha && $hcaptchaSiteKey !== '' && $userId !== null) {
             $text .= "\n\n请先完成人机验证后再继续。";
         }
 
