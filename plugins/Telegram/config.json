@@ -3,7 +3,7 @@
     "code": "telegram",
     "version": "2.0.0",
     "description": "Telegram 群组欢迎与频道推荐",
-    "author": "XBoard Team",
+    "author": "chenchen71956",
     "require": {
         "xboard": ">=1.0.0"
     },
