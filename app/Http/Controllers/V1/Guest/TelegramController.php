@@ -112,15 +112,34 @@ class TelegramController extends Controller
         $user = User::where('telegram_id', $userId)->first();
 
         if (!$user) {
+            HookManager::call('telegram.chat_join_request.declined', [[
+                'chat_id' => $chatId,
+                'user_id' => $userId,
+                'join_request' => $joinRequest,
+                'reason' => 'user_not_bound'
+            ]]);
             $this->telegramService->declineChatJoinRequest($chatId, $userId);
             return;
         }
 
         if (!$this->userService->isAvailable($user)) {
+            HookManager::call('telegram.chat_join_request.declined', [[
+                'chat_id' => $chatId,
+                'user_id' => $userId,
+                'join_request' => $joinRequest,
+                'user' => $user,
+                'reason' => 'user_not_available'
+            ]]);
             $this->telegramService->declineChatJoinRequest($chatId, $userId);
             return;
         }
 
         $this->telegramService->approveChatJoinRequest($chatId, $userId);
+        HookManager::call('telegram.chat_join_request.approved', [[
+            'chat_id' => $chatId,
+            'user_id' => $userId,
+            'join_request' => $joinRequest,
+            'user' => $user
+        ]]);
     }
 }
