@@ -38,7 +38,11 @@ RUN composer install --no-cache --no-dev \
     
 ENV ENABLE_WEB=true \
     ENABLE_HORIZON=true \
-    ENABLE_REDIS=false 
+    ENABLE_REDIS=false \
+    ENABLE_PANEL_WS=false \
+    PANEL_WS_HOST=0.0.0.0 \
+    PANEL_WS_PORT=51821
 
 EXPOSE 7001
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"] 
+EXPOSE 51821
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

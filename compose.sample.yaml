@@ -6,10 +6,15 @@ services:
       - ./:/www/
     environment:
       - docker=true
+      - ENABLE_WEB=true
+      - ENABLE_HORIZON=false
+      - ENABLE_PANEL_WS=false
+      - PANEL_WS_HOST=0.0.0.0
+      - PANEL_WS_PORT=51821
     depends_on:
       - redis
     network_mode: host
-    command: php artisan octane:start --port=7001 --host=0.0.0.0
+    command: /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
     restart: always
   horizon:
     image: ghcr.io/cedar2025/xboard:new
