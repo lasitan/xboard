@@ -27,6 +27,9 @@ class PanelWsServer extends Command
         /** @var array<int, array<string, mixed>> $connQuery */
         $connQuery = [];
 
+        /** @var array<int, string> $connPath */
+        $connPath = [];
+
         $server->set([
             'http_compression' => true,
             'open_http_protocol' => true,
@@ -34,9 +37,17 @@ class PanelWsServer extends Command
             'websocket_compression' => true,
         ]);
 
-        $server->on('open', function (\Swoole\WebSocket\Server $server, \Swoole\Http\Request $request) use (&$connQuery): void {
+        $server->on('open', function (\Swoole\WebSocket\Server $server, \Swoole\Http\Request $request) use (&$connQuery, &$connPath): void {
             $query = is_array($request->get ?? null) ? $request->get : [];
             $connQuery[(int) $request->fd] = $query;
+
+            $requestUri = '';
+            if (is_array($request->server ?? null) && isset($request->server['request_uri'])) {
+                $requestUri = (string) $request->server['request_uri'];
+            }
+            $parsed = $requestUri !== '' ? parse_url($requestUri) : null;
+            $path = is_array($parsed) && isset($parsed['path']) ? (string) $parsed['path'] : '';
+            $connPath[(int) $request->fd] = $path;
 
             $token = $query['token'] ?? null;
             $nodeId = $query['node_id'] ?? null;
@@ -46,7 +57,7 @@ class PanelWsServer extends Command
             }
         });
 
-        $server->on('message', function (\Swoole\WebSocket\Server $server, \Swoole\WebSocket\Frame $frame) use (&$connQuery): void {
+        $server->on('message', function (\Swoole\WebSocket\Server $server, \Swoole\WebSocket\Frame $frame) use (&$connQuery, &$connPath): void {
             $wsRequest = json_decode($frame->data, true);
             if (!is_array($wsRequest)) {
                 $this->pushWsResponse($server, $frame->fd, 400, [], 'Invalid JSON');
@@ -60,6 +71,12 @@ class PanelWsServer extends Command
             }
 
             $path = (string) ($wsRequest['path'] ?? '');
+            if ($path === '' || $path[0] !== '/') {
+                $fallback = $connPath[(int) $frame->fd] ?? '';
+                if ($fallback !== '' && $fallback[0] === '/') {
+                    $path = $fallback;
+                }
+            }
             if ($path === '' || $path[0] !== '/') {
                 $this->pushWsResponse($server, $frame->fd, 400, [], 'Invalid path');
                 return;
@@ -113,8 +130,9 @@ class PanelWsServer extends Command
             }
         });
 
-        $server->on('close', function (\Swoole\WebSocket\Server $server, int $fd) use (&$connQuery): void {
+        $server->on('close', function (\Swoole\WebSocket\Server $server, int $fd) use (&$connQuery, &$connPath): void {
             unset($connQuery[$fd]);
+            unset($connPath[$fd]);
         });
 
         $this->info("Panel WS server listening on ws://{$host}:{$port}");
