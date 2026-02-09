@@ -28,6 +28,14 @@ class TicketService
             } else {
                 $ticket->reply_status = Ticket::STATUS_CLOSED;
             }
+
+            try {
+                if (Schema::hasColumn('v2_ticket', 'last_reply_user_id')) {
+                    $ticket->last_reply_user_id = $userId;
+                }
+            } catch (\Throwable) {
+                // ignore
+            }
             if (!$ticketMessage || !$ticket->save()) {
                 throw new \Exception();
             }
@@ -63,6 +71,25 @@ class TicketService
             } else {
                 $ticket->reply_status = Ticket::STATUS_CLOSED;
             }
+
+            try {
+                if (Schema::hasColumn('v2_ticket', 'last_reply_user_id')) {
+                    $ticket->last_reply_user_id = $userId;
+                }
+            } catch (\Throwable) {
+                // ignore
+            }
+
+            try {
+                if (Schema::hasColumn('v2_ticket', 'user_remind_at')) {
+                    $ticket->user_remind_at = 0;
+                }
+                if (Schema::hasColumn('v2_ticket', 'auto_closed_at')) {
+                    $ticket->auto_closed_at = 0;
+                }
+            } catch (\Throwable) {
+                // ignore
+            }
             if (!$ticketMessage || !$ticket->save()) {
                 throw new ApiException('工单回复失败');
             }
@@ -90,6 +117,15 @@ class TicketService
             ]);
             if (!$ticket) {
                 throw new ApiException('工单创建失败');
+            }
+
+            try {
+                if (Schema::hasColumn('v2_ticket', 'last_reply_user_id')) {
+                    $ticket->last_reply_user_id = $userId;
+                    $ticket->save();
+                }
+            } catch (\Throwable) {
+                // ignore
             }
             $ticketMessage = TicketMessage::create([
                 'user_id' => $userId,
