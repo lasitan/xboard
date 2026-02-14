@@ -125,6 +125,8 @@ class GiftCardTemplate extends Model
     {
         $registerDays = max(0, (int) floor((time() - (int) $user->created_at) / 86400));
 
+        $conditions = $this->conditions ?? [];
+
         switch ($this->type) {
             case self::TYPE_GENERAL:
                 $rewards = $this->rewards ?? [];
@@ -136,12 +138,13 @@ class GiftCardTemplate extends Model
                 break;
             case self::TYPE_PLAN:
                 if ($user->isActive()) {
+                    if (isset($conditions['allowed_plans']) && $user->plan_id && in_array($user->plan_id, $conditions['allowed_plans'])) {
+                        break;
+                    }
                     return ['ok' => false, 'reason' => '该礼品卡仅限未订阅的用户使用'];
                 }
                 break;
         }
-
-        $conditions = $this->conditions ?? [];
 
         if (isset($conditions['min_register_days'])) {
             $minDays = (int) $conditions['min_register_days'];
