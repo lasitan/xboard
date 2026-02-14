@@ -118,29 +118,49 @@ class GiftCardTemplate extends Model
      */
     public function checkUserConditions(User $user): bool
     {
+        return $this->checkUserConditionsWithReason($user)['ok'];
+    }
+
+    public function checkUserConditionsWithReason(User $user): array
+    {
+        $registerDays = max(0, (int) floor((time() - (int) $user->created_at) / 86400));
+
         switch ($this->type) {
             case self::TYPE_GENERAL:
                 $rewards = $this->rewards ?? [];
                 if (isset($rewards['transfer_enable']) || isset($rewards['expire_days']) || isset($rewards['reset_package'])) {
                     if (!$user->plan_id) {
-                        return false;
+                        return ['ok' => false, 'reason' => '该礼品卡仅限已有订阅的用户使用'];
                     }
                 }
                 break;
             case self::TYPE_PLAN:
                 if ($user->isActive()) {
-                    return false;
+                    return ['ok' => false, 'reason' => '该礼品卡仅限未订阅的用户使用'];
                 }
                 break;
         }
 
         $conditions = $this->conditions ?? [];
 
+        if (isset($conditions['min_register_days'])) {
+            $minDays = (int) $conditions['min_register_days'];
+            if ($minDays > 0 && $registerDays <= $minDays) {
+                return [
+                    'ok' => false,
+                    'reason' => "该礼品卡的兑换条件需要注册大于{$minDays}天，而您注册了{$registerDays}天",
+                ];
+            }
+        }
+
         // 检查新用户条件
         if (isset($conditions['new_user_only']) && $conditions['new_user_only']) {
-            $maxDays = $conditions['new_user_max_days'] ?? 7;
+            $maxDays = (int) ($conditions['new_user_max_days'] ?? 7);
             if ($user->created_at < (time() - ($maxDays * 86400))) {
-                return false;
+                return [
+                    'ok' => false,
+                    'reason' => "该礼品卡仅限注册不超过{$maxDays}天用户，您已注册{$registerDays}天",
+                ];
             }
         }
 
@@ -148,25 +168,25 @@ class GiftCardTemplate extends Model
         if (isset($conditions['paid_user_only']) && $conditions['paid_user_only']) {
             $paidOrderExists = $user->orders()->where('status', Order::STATUS_COMPLETED)->exists();
             if (!$paidOrderExists) {
-                return false;
+                return ['ok' => false, 'reason' => '该礼品卡仅限付费用户使用'];
             }
         }
 
         // 检查允许的套餐
         if (isset($conditions['allowed_plans']) && $user->plan_id) {
             if (!in_array($user->plan_id, $conditions['allowed_plans'])) {
-                return false;
+                return ['ok' => false, 'reason' => '您当前套餐不符合该礼品卡的使用条件'];
             }
         }
 
         // 检查是否需要邀请人
         if (isset($conditions['require_invite']) && $conditions['require_invite']) {
             if (!$user->invite_user_id) {
-                return false;
+                return ['ok' => false, 'reason' => '该礼品卡要求您必须通过邀请注册'];
             }
         }
 
-        return true;
+        return ['ok' => true, 'reason' => null];
     }
 
     /**

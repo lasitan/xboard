@@ -79,10 +79,11 @@ class GiftCardService
             ];
         }
 
-        if (!$this->template->checkUserConditions($this->user)) {
+        $conditionCheck = $this->template->checkUserConditionsWithReason($this->user);
+        if (!$conditionCheck['ok']) {
             return [
                 'can_redeem' => false,
-                'reason' => '您不满足此礼品卡的使用条件'
+                'reason' => $conditionCheck['reason'] ?? '您不满足此礼品卡的使用条件'
             ];
         }
 

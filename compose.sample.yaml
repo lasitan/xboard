@@ -1,36 +1,59 @@
 services:
   web:
-    image: ghcr.io/cedar2025/xboard:new
+    image: ghcr.io/lasitan/xboard:new
     volumes:
       - ./.docker/.data/redis/:/data/
-      - ./:/www/
+      - ./.env:/www/.env
+      - ./.docker/.data/:/www/.docker/.data
+      - ./storage/logs:/www/storage/logs
+      - ./storage/theme:/www/storage/theme
+      - ./plugins:/www/plugins
+      - ./mail:/www/resources/views/mail
     environment:
       - docker=true
-      - ENABLE_WEB=true
-      - ENABLE_HORIZON=false
-      - ENABLE_PANEL_WS=false
-      - PANEL_WS_HOST=0.0.0.0
-      - PANEL_WS_PORT=51821
     depends_on:
       - redis
-    network_mode: host
-    command: /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+    # network_mode: host
+    command: php artisan octane:start --port=7001 --host=0.0.0.0
     restart: always
-  horizon:
-    image: ghcr.io/cedar2025/xboard:new
+    ports:
+      - 7001:7001
+  panel_ws:
+    image: ghcr.io/lasitan/xboard:new
     volumes:
       - ./.docker/.data/redis/:/data/
-      - ./:/www/
+      - ./.env:/www/.env
+      - ./.docker/.data/:/www/.docker/.data
+      - ./storage/logs:/www/storage/logs
+      - ./storage/theme:/www/storage/theme
+      - ./plugins:/www/plugins
+      - ./mail:/www/resources/views/mail
+    environment:
+      - docker=true
+    depends_on:
+      - redis
+    # network_mode: host
+    command: php artisan xboard:panel-ws --host=0.0.0.0 --port=51821
     restart: always
-    network_mode: host
+    ports:
+      - 51821:51821
+  horizon:
+    image: ghcr.io/lasitan/xboard:new
+    volumes:
+      - ./.docker/.data/redis/:/data/
+      - ./.env:/www/.env
+      - ./.docker/.data/:/www/.docker/.data
+      - ./storage/logs:/www/storage/logs
+      - ./plugins:/www/plugins
+      - ./mail:/www/resources/views/mail
+    restart: on-failure
+    # network_mode: host
     command: php artisan horizon
     depends_on:
       - redis
   redis:
     image: redis:7-alpine
-    command: redis-server --unixsocket /data/redis.sock --unixsocketperm 777
+    command: redis-server --unixsocket /data/redis.sock --unixsocketperm 777 --save 900 1 --save 300 10 --save 60 10000
     restart: unless-stopped
     volumes:
       - ./.docker/.data/redis:/data
-    sysctls:
-      net.core.somaxconn: 1024
